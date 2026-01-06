@@ -1,4 +1,4 @@
-
+-- [[ EndardHub Modern Edition - Auto-Refresh Boss ESP ]] --
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -6,15 +6,24 @@ local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
-local targetNames = {["Robo"] = true, ["Hawk Eye"] = true, ["Roger"] = true, ["Roger"] = true, ["Donmingo"] = true, ["Soul King"] = true, ["Juzo the Diamondback"] = true, ["Law"] = true}
-local NPCsFolder = workspace:FindFirstChild("NPCs")
+-- GENİŞLETİLMİŞ NPC LİSTESİ
+local targetNames = {
+    ["Robo"] = true, 
+    ["Hawk Eye"] = true, 
+    ["Roger"] = true, 
+    ["Donmingo"] = true, 
+    ["Soul King"] = true, 
+    ["Juzo the Diamondback"] = true, 
+    ["Law"] = true
+}
 
+local NPCsFolder = workspace:FindFirstChild("NPCs")
 
 _G.AutoAim = false
 _G.BossESP = false
 _G.HubActive = true
 
-
+-- GUI OLUŞTURMA
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "EndardHub_Gui"
 ScreenGui.Parent = game:GetService("CoreGui")
@@ -69,7 +78,6 @@ end
 local AimCB = createButton("Auto Aim", UDim2.new(0.075, 0, 0.3, 0))
 local BossCB = createButton("Boss ESP", UDim2.new(0.075, 0, 0.6, 0))
 
-
 local function updateAimUI()
     local targetColor = _G.AutoAim and Color3.fromRGB(0, 170, 127) or Color3.fromRGB(45, 45, 45)
     TweenService:Create(AimCB, TweenInfo.new(0.3), {BackgroundColor3 = targetColor}):Play()
@@ -82,7 +90,7 @@ local function updateBossUI()
     BossCB.Text = "Boss ESP: " .. (_G.BossESP and "ON" or "OFF")
 end
 
-
+-- Temizleme
 CloseBtn.MouseButton1Click:Connect(function()
     _G.HubActive = false
     _G.AutoAim = false
@@ -92,7 +100,6 @@ CloseBtn.MouseButton1Click:Connect(function()
         if v.Name == "ESP_Marker" or v.Name == "ESP_Name" or v.ClassName == "BoxHandleAdornment" then v:Destroy() end
     end
 end)
-
 
 local function toggleAim()
     _G.AutoAim = not _G.AutoAim
@@ -112,17 +119,16 @@ end
 AimCB.MouseButton1Click:Connect(toggleAim)
 BossCB.MouseButton1Click:Connect(toggleBoss)
 
-
 UserInputService.InputBegan:Connect(function(input, proc)
     if proc then return end
     if input.KeyCode == Enum.KeyCode.N then
         MainFrame.Visible = not MainFrame.Visible
     elseif input.KeyCode == Enum.KeyCode.J then
-        toggleAim() 
+        toggleAim()
     end
 end)
 
-
+-- ARTİ İŞARETİ OLUŞTURUCU
 local function createVisibleCross(root)
     local function createBar(size)
         local bar = Instance.new("BoxHandleAdornment")
@@ -132,65 +138,84 @@ local function createVisibleCross(root)
         bar.Adornee = root
         bar.Transparency = 0.2
         bar.Parent = root
+        bar.Name = "ESP_Cross_Part"
         return bar
     end
     return createBar(Vector3.new(18, 1.8, 1.8)), createBar(Vector3.new(1.8, 18, 1.8))
 end
 
+-- ESP UYGULAMA FONKSİYONU
+local function applyESP(npc)
+    if not _G.BossESP or not npc:FindFirstChild("HumanoidRootPart") then return end
+    if npc:FindFirstChild("ESP_Marker") then return end
 
-RunService.RenderStepped:Connect(function()
-    if not _G.HubActive then return end
+    -- Marker olarak bir parça ekle ki tekrar eklemesin
+    local marker = Instance.new("StringValue", npc)
+    marker.Name = "ESP_Marker"
+
+    -- Highlight
+    local hl = Instance.new("Highlight", npc)
+    hl.Name = "ESP_Highlight"
+    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+
+    -- Name Tag
+    local root = npc.HumanoidRootPart
+    local bg = Instance.new("BillboardGui", root)
+    bg.Name = "ESP_Name"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0, 100, 0, 40); bg.StudsOffset = Vector3.new(0, 10, 0)
+    local lbl = Instance.new("TextLabel", bg)
+    lbl.BackgroundTransparency = 1; lbl.Size = UDim2.new(1,0,1,0); lbl.Text = npc.Name; lbl.TextColor3 = Color3.new(1,1,1); lbl.Font = Enum.Font.GothamBold; lbl.TextScaled = true
     
+    -- Cross
+    local bar1, bar2 = createVisibleCross(root)
     
-    if _G.AutoAim then
-        local dist, target = math.huge, nil
-        for _, npc in pairs(NPCsFolder:GetChildren()) do
-            if targetNames[npc.Name] and npc.Name ~= "Robo" and npc:FindFirstChild("HumanoidRootPart") then
-                local char = LocalPlayer.Character
-                if char and char:FindFirstChild("HumanoidRootPart") then
-                    local d = (npc.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
-                    if d < dist then dist = d; target = npc end
+    task.spawn(function()
+        local hue = 0
+        while npc.Parent and _G.BossESP and marker.Parent do
+            hue = (hue + 0.01) % 1
+            local color = Color3.fromHSV(hue, 1, 1)
+            if bar1 and bar2 then
+                bar1.Color3 = color
+                bar2.Color3 = color
+            end
+            task.wait()
+        end
+        if bar1 then bar1:Destroy() end
+        if bar2 then bar2:Destroy() end
+        if hl then hl:Destroy() end
+        if bg then bg:Destroy() end
+    end)
+end
+
+-- ANA DÖNGÜ VE YENİLEME
+task.spawn(function()
+    while task.wait(1) do -- Her saniye tara
+        if _G.HubActive and _G.BossESP and NPCsFolder then
+            for _, npc in pairs(NPCsFolder:GetChildren()) do
+                if targetNames[npc.Name] then
+                    applyESP(npc)
                 end
             end
         end
-        if target then
-            Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.HumanoidRootPart.Position)
+    end
+end)
+
+-- AİMBOT DÖNGÜSÜ
+RunService.RenderStepped:Connect(function()
+    if not _G.HubActive or not _G.AutoAim or not NPCsFolder then return end
+    
+    local dist, target = math.huge, nil
+    for _, npc in pairs(NPCsFolder:GetChildren()) do
+        -- Robo hariç diğer Boss'lara aim
+        if targetNames[npc.Name] and npc.Name ~= "Robo" and npc:FindFirstChild("HumanoidRootPart") then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                local d = (npc.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
+                if d < dist then dist = d; target = npc end
+            end
         end
     end
     
-    
-    if _G.BossESP then
-        for _, npc in pairs(NPCsFolder:GetChildren()) do
-            if targetNames[npc.Name] and npc:FindFirstChild("HumanoidRootPart") then
-                if not npc:FindFirstChild("ESP_Marker") then
-                    local hl = Instance.new("Highlight", npc)
-                    hl.Name = "ESP_Marker"
-                    hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-                    
-                    local root = npc.HumanoidRootPart
-                    local bg = Instance.new("BillboardGui", root)
-                    bg.Name = "ESP_Name"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0, 100, 0, 40); bg.StudsOffset = Vector3.new(0, 10, 0)
-                    local lbl = Instance.new("TextLabel", bg)
-                    lbl.BackgroundTransparency = 1; lbl.Size = UDim2.new(1,0,1,0); lbl.Text = npc.Name; lbl.TextColor3 = Color3.new(1,1,1); lbl.Font = Enum.Font.GothamBold; lbl.TextScaled = true
-                    
-                    local bar1, bar2 = createVisibleCross(root)
-                    
-                    task.spawn(function()
-                        local hue = 0
-                        while npc.Parent and _G.BossESP do
-                            hue = (hue + 0.01) % 1 
-                            local color = Color3.fromHSV(hue, 1, 1)
-                            if bar1 and bar2 then
-                                bar1.Color3 = color
-                                bar2.Color3 = color
-                            end
-                            task.wait()
-                        end
-                        if bar1 then bar1:Destroy() end
-                        if bar2 then bar2:Destroy() end
-                    end)
-                end
-            end
-        end
+    if target then
+        Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.HumanoidRootPart.Position)
     end
 end)
