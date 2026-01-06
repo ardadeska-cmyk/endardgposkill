@@ -6,7 +6,7 @@ local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
-local targetNames = {["Robo"] = true, ["Hawk Eye"] = true, ["Roger"] = true, ["Law"] = true}
+local targetNames = {["Robo"] = true, ["Hawk Eye"] = true, ["Roger"] = true, ["Roger"] = true, ["Donmingo"] = true, ["Soul King"] = true, ["Juzo the Diamondback"] = true, ["Law"] = true}
 local NPCsFolder = workspace:FindFirstChild("NPCs")
 
 
