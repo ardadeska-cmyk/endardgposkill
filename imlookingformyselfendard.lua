@@ -1,68 +1,48 @@
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
 
 local targetNames = {
-    ["Robo"] = true, 
-    ["Hawk Eye"] = true, 
-    ["Roger"] = true, 
-    ["Donmingo"] = true, 
-    ["Soul King"] = true, 
-    ["Juzo the Diamondback"] = true, 
-    ["Law"] = true
+    ["Robo"] = true, ["Hawk Eye"] = true, ["Roger"] = true, 
+    ["Donmingo"] = true, ["Soul King"] = true, ["Juzo the Diamondback"] = true, ["Law"] = true
 }
-
+local ItemsList = {"Race Reroll", "Coffin Boat", "Ten Tails Jinchuriki Costume", "Striker","Iceborn Headband","Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest", "Rare Fish Bait", "Legendary Fish Bait", "Sorcerer Hunter Costume", "Powderpunk Outfit"}
 local NPCsFolder = workspace:FindFirstChild("NPCs")
+local SelectedItems = {}
 
 _G.AutoAim = false
-_G.BossESP = true 
+_G.BossESP = true
 _G.HubActive = true
 
 
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "EndardHub_Modern"
+ScreenGui.Name = "EndardHub_Ultimate"
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
 local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
 MainFrame.Parent = ScreenGui
 MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-MainFrame.Position = UDim2.new(0.5, -125, 0.5, -175)
-MainFrame.Size = UDim2.new(0, 250, 0, 380)
+MainFrame.Position = UDim2.new(0.5, -125, 0.5, -225)
+MainFrame.Size = UDim2.new(0, 260, 0, 480)
 MainFrame.Active = true
 MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
-
-local Stroke = Instance.new("UIStroke")
-Stroke.Parent = MainFrame
-Stroke.Color = Color3.fromRGB(60, 60, 65)
-Stroke.Thickness = 1
+Instance.new("UIStroke", MainFrame).Color = Color3.fromRGB(60, 60, 65)
 
 local Title = Instance.new("TextLabel")
 Title.Parent = MainFrame
 Title.Size = UDim2.new(1, 0, 0, 50)
-Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 Title.BackgroundTransparency = 1
 Title.Text = "EndardHub"
 Title.TextColor3 = Color3.fromRGB(0, 255, 170)
 Title.Font = Enum.Font.GothamBold
 Title.TextSize = 22
-
-local SubTitle = Instance.new("TextLabel")
-SubTitle.Parent = Title
-SubTitle.Size = UDim2.new(1, 0, 0, 20)
-SubTitle.Position = UDim2.new(0, 0, 0.65, 0)
-SubTitle.BackgroundTransparency = 1
-SubTitle.Text = "Modern Edition"
-SubTitle.TextColor3 = Color3.fromRGB(150, 150, 150)
-SubTitle.Font = Enum.Font.Gotham
-SubTitle.TextSize = 12
 
 local CloseBtn = Instance.new("TextButton")
 CloseBtn.Parent = MainFrame
@@ -74,42 +54,42 @@ CloseBtn.TextColor3 = Color3.fromRGB(200, 60, 60)
 CloseBtn.Font = Enum.Font.GothamBold
 CloseBtn.TextSize = 18
 
-local ContentContainer = Instance.new("Frame")
-ContentContainer.Name = "Container"
+local ContentContainer = Instance.new("ScrollingFrame")
 ContentContainer.Parent = MainFrame
 ContentContainer.BackgroundTransparency = 1
 ContentContainer.Position = UDim2.new(0, 15, 0, 60)
 ContentContainer.Size = UDim2.new(1, -30, 1, -70)
+ContentContainer.CanvasSize = UDim2.new(0, 0, 1.8, 0) -- İçerik uzadıkça kaydırılabilir
+ContentContainer.ScrollBarThickness = 2
+ContentContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
 
 local UIList = Instance.new("UIListLayout")
 UIList.Parent = ContentContainer
-UIList.SortOrder = Enum.SortOrder.LayoutOrder
-UIList.Padding = UDim.new(0, 10)
+UIList.Padding = UDim.new(0, 8)
 
-
-
+-- [[ MODERN UI FONKSİYONLARI ]] --
 local function createToggle(text, defaultState, callback)
     local Wrapper = Instance.new("Frame")
-    Wrapper.Size = UDim2.new(1, 0, 0, 40)
+    Wrapper.Size = UDim2.new(1, 0, 0, 35)
     Wrapper.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
     Wrapper.Parent = ContentContainer
-    Instance.new("UICorner", Wrapper).CornerRadius = UDim.new(0, 8)
+    Instance.new("UICorner", Wrapper).CornerRadius = UDim.new(0, 6)
     
     local Label = Instance.new("TextLabel")
     Label.Parent = Wrapper
     Label.Size = UDim2.new(0.6, 0, 1, 0)
-    Label.Position = UDim2.new(0, 15, 0, 0)
+    Label.Position = UDim2.new(0, 10, 0, 0)
     Label.BackgroundTransparency = 1
     Label.Text = text
     Label.TextColor3 = Color3.fromRGB(220, 220, 220)
     Label.Font = Enum.Font.GothamSemibold
-    Label.TextSize = 14
+    Label.TextSize = 12
     Label.TextXAlignment = Enum.TextXAlignment.Left
 
     local SwitchBg = Instance.new("TextButton")
     SwitchBg.Parent = Wrapper
-    SwitchBg.Size = UDim2.new(0, 44, 0, 24)
-    SwitchBg.Position = UDim2.new(1, -55, 0.5, -12)
+    SwitchBg.Size = UDim2.new(0, 36, 0, 20)
+    SwitchBg.Position = UDim2.new(1, -42, 0.5, -10)
     SwitchBg.BackgroundColor3 = defaultState and Color3.fromRGB(0, 255, 170) or Color3.fromRGB(60, 60, 65)
     SwitchBg.Text = ""
     SwitchBg.AutoButtonColor = false
@@ -117,160 +97,182 @@ local function createToggle(text, defaultState, callback)
 
     local Knob = Instance.new("Frame")
     Knob.Parent = SwitchBg
-    Knob.Size = UDim2.new(0, 18, 0, 18)
-    Knob.Position = defaultState and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
+    Knob.Size = UDim2.new(0, 14, 0, 14)
+    Knob.Position = defaultState and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
     Knob.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Instance.new("UICorner", Knob).CornerRadius = UDim.new(1, 0)
 
     local isOn = defaultState
-
     local function setToggle(newState)
         isOn = newState
-        local targetPos = isOn and UDim2.new(1, -21, 0.5, -9) or UDim2.new(0, 3, 0.5, -9)
+        local targetPos = isOn and UDim2.new(1, -17, 0.5, -7) or UDim2.new(0, 3, 0.5, -7)
         local targetColor = isOn and Color3.fromRGB(0, 255, 170) or Color3.fromRGB(60, 60, 65)
-        
-        TweenService:Create(Knob, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {Position = targetPos}):Play()
-        TweenService:Create(SwitchBg, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {BackgroundColor3 = targetColor}):Play()
-        
+        TweenService:Create(Knob, TweenInfo.new(0.2), {Position = targetPos}):Play()
+        TweenService:Create(SwitchBg, TweenInfo.new(0.2), {BackgroundColor3 = targetColor}):Play()
         callback(isOn)
     end
-
-    SwitchBg.MouseButton1Click:Connect(function()
-        setToggle(not isOn)
-    end)
-    
+    SwitchBg.MouseButton1Click:Connect(function() setToggle(not isOn) end)
     return setToggle
 end
 
-local function createActionButton(text, callback)
+local function createActionButton(text, color, callback)
     local Btn = Instance.new("TextButton")
     Btn.Parent = ContentContainer
-    Btn.Size = UDim2.new(1, 0, 0, 40)
-    Btn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    Btn.Size = UDim2.new(1, 0, 0, 35)
+    Btn.BackgroundColor3 = color or Color3.fromRGB(50, 50, 55)
     Btn.Text = text
     Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     Btn.Font = Enum.Font.GothamBold
-    Btn.TextSize = 14
-    Btn.AutoButtonColor = false
-    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 8)
-    
-    Btn.MouseButton1Click:Connect(function()
-        TweenService:Create(Btn, TweenInfo.new(0.1), {Size = UDim2.new(1, -4, 0, 36)}):Play()
-        task.wait(0.1)
-        TweenService:Create(Btn, TweenInfo.new(0.1), {Size = UDim2.new(1, 0, 0, 40)}):Play()
-        callback()
-    end)
+    Btn.TextSize = 13
+    Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 6)
+    Btn.MouseButton1Click:Connect(callback)
     return Btn
 end
 
 -- [[ MENÜ ELEMANLARI ]] --
+local updateAimToggle = createToggle("Auto Aim [Caps Lock]", false, function(state) _G.AutoAim = state end)
+createToggle("Boss ESP", true, function(state) _G.BossESP = state end)
 
-local updateAimToggle = createToggle("Auto Aim", false, function(state)
-    _G.AutoAim = state
+createActionButton("Mihawk & Roger Tarama", nil, function()
+    local r = LocalPlayer.Character.HumanoidRootPart
+    local old = r.CFrame
+    LocalPlayer.Character:PivotTo(workspace.Islands["Umi Island"]:GetPivot() * CFrame.new(0, 55, 0))
+    task.wait(0.5) r.CFrame = old
 end)
 
--- Boss ESP Artık defaultState = true (Otomatik Açık)
-createToggle("Boss ESP", true, function(state)
-    _G.BossESP = state
-    if not state then
-        for _, v in pairs(workspace:GetDescendants()) do
-            if v.Name == "ESP_Marker" or v.Name == "ESP_Name" or v.ClassName == "BoxHandleAdornment" then v:Destroy() end
+createActionButton("Juzo Tarama", nil, function()
+    local r = LocalPlayer.Character.HumanoidRootPart
+    local old = r.CFrame
+    LocalPlayer.Character:PivotTo(workspace.Islands["Turtleback Cave"]:GetPivot() * CFrame.new(0, 15, 0))
+    task.wait(0.5) r.CFrame = old
+end)
+
+-- MERCHANT KISMI
+local Divider = Instance.new("Frame")
+Divider.Parent = ContentContainer
+Divider.Size = UDim2.new(1, 0, 0, 1)
+Divider.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+
+local MerchantTitle = Instance.new("TextLabel")
+MerchantTitle.Parent = ContentContainer
+MerchantTitle.Size = UDim2.new(1, 0, 0, 20)
+MerchantTitle.Text = "MERCHANT ITEMS"
+MerchantTitle.TextColor3 = Color3.fromRGB(0, 255, 170)
+MerchantTitle.Font = Enum.Font.GothamBold
+MerchantTitle.BackgroundTransparency = 1
+MerchantTitle.TextSize = 12
+
+-- Item Seçim Listesi (Combobox Mantığı)
+for _, itemName in pairs(ItemsList) do
+    local ItemBtn = Instance.new("TextButton")
+    ItemBtn.Parent = ContentContainer
+    ItemBtn.Size = UDim2.new(1, 0, 0, 25)
+    ItemBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    ItemBtn.Text = itemName
+    ItemBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+    ItemBtn.Font = Enum.Font.Gotham
+    ItemBtn.TextSize = 11
+    Instance.new("UICorner", ItemBtn)
+
+    ItemBtn.MouseButton1Click:Connect(function()
+        if SelectedItems[itemName] then
+            SelectedItems[itemName] = nil
+            ItemBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            ItemBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+        else
+            SelectedItems[itemName] = true
+            ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
+            ItemBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
         end
-    end
-end)
-
-createActionButton("Mihawk & Roger Tarama", function()
-    local c = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local r = c:WaitForChild("HumanoidRootPart")
-    local target = workspace:WaitForChild("Islands"):WaitForChild("Umi Island")
-    local oldCF = r.CFrame
-    c:PivotTo(target:GetPivot() * CFrame.new(0, 55, 0))
-    task.wait(0.5)
-    c:PivotTo(oldCF)
-end)
-
-createActionButton("Juzo Tarama", function()
-    local c = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-    local r = c:WaitForChild("HumanoidRootPart")
-    local target = workspace:WaitForChild("Islands"):WaitForChild("Turtleback Cave")
-    local oldCF = r.CFrame
-    c:PivotTo(target:GetPivot() * CFrame.new(0, 15, 0))
-    task.wait(0.5)
-    c:PivotTo(oldCF)
-end)
-
--- [[ LOJİK ]] --
-
-UserInputService.InputBegan:Connect(function(input, proc)
-    if proc then return end
-    if input.KeyCode == Enum.KeyCode.CapsLock then
-        if updateAimToggle then updateAimToggle(not _G.AutoAim) end
-    elseif input.KeyCode == Enum.KeyCode.N then
-        MainFrame.Visible = not MainFrame.Visible
-    end
-end)
-
-CloseBtn.MouseButton1Click:Connect(function()
-    _G.HubActive = false
-    _G.AutoAim = false
-    _G.BossESP = false
-    ScreenGui:Destroy()
-    for _, v in pairs(workspace:GetDescendants()) do
-        if v.Name == "ESP_Marker" or v.Name == "ESP_Name" or v.ClassName == "BoxHandleAdornment" then v:Destroy() end
-    end
-end)
-
-local function createVisibleCross(root)
-    local function createBar(size)
-        local bar = Instance.new("BoxHandleAdornment")
-        bar.Size = size; bar.AlwaysOnTop = true; bar.ZIndex = 10; bar.Adornee = root; bar.Transparency = 0.2; bar.Parent = root; bar.Name = "ESP_Cross_Part"
-        return bar
-    end
-    return createBar(Vector3.new(18, 1.8, 1.8)), createBar(Vector3.new(1.8, 18, 1.8))
-end
-
-local function applyESP(npc)
-    if not _G.BossESP or not npc:FindFirstChild("HumanoidRootPart") or npc:FindFirstChild("ESP_Marker") then return end
-    local marker = Instance.new("StringValue", npc); marker.Name = "ESP_Marker"
-    local hl = Instance.new("Highlight", npc); hl.Name = "ESP_Highlight"; hl.FillColor = Color3.fromRGB(255, 0, 0); hl.OutlineColor = Color3.fromRGB(255, 255, 255); hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    local root = npc.HumanoidRootPart
-    local bg = Instance.new("BillboardGui", root); bg.Name = "ESP_Name"; bg.AlwaysOnTop = true; bg.Size = UDim2.new(0, 100, 0, 40); bg.StudsOffset = Vector3.new(0, 10, 0)
-    local lbl = Instance.new("TextLabel", bg); lbl.BackgroundTransparency = 1; lbl.Size = UDim2.new(1,0,1,0); lbl.Text = npc.Name; lbl.TextColor3 = Color3.new(1,1,1); lbl.Font = Enum.Font.GothamBold; lbl.TextScaled = true
-    local b1, b2 = createVisibleCross(root)
-    task.spawn(function()
-        local h = 0
-        while npc.Parent and _G.BossESP and marker.Parent do
-            h = (h + 0.005) % 1
-            local col = Color3.fromHSV(h, 1, 1)
-            if b1 and b2 then b1.Color3 = col b2.Color3 = col end
-            if hl then hl.OutlineColor = col end
-            task.wait()
-        end
-        if b1 then b1:Destroy() end if b2 then b2:Destroy() end if hl then hl:Destroy() end if bg then bg:Destroy() end
     end)
 end
 
-task.spawn(function()
-    while task.wait(1) do
-        if _G.HubActive and _G.BossESP and NPCsFolder then
-            for _, npc in pairs(NPCsFolder:GetChildren()) do
-                if targetNames[npc.Name] then applyESP(npc) end
+-- ÇALIŞTIR BUTONU (Merchant Işınlanma + 40x)
+createActionButton("ÇALIŞTIR (Işınlan + 40x)", Color3.fromRGB(0, 100, 200), function()
+    local RootPart = LocalPlayer.Character.HumanoidRootPart
+    local compassObj = ReplicatedStorage.CompassGuider:FindFirstChild("Traveling Merchant")
+    if not compassObj then return end
+
+    local targetCFrame = (typeof(compassObj.Value) == "CFrame" and compassObj.Value) or CFrame.new(compassObj.Value)
+    local originalCFrame = RootPart.CFrame
+    local Remote = ReplicatedStorage.Events.TravelingMerchentRemote
+
+    LocalPlayer:RequestStreamAroundAsync(targetCFrame.Position)
+    RootPart.CFrame = targetCFrame
+
+    task.spawn(function()
+        for i = 1, 40 do
+            task.spawn(function() pcall(function() Remote:InvokeServer("OpenShop") end) end)
+            for itemName, _ in pairs(SelectedItems) do
+                task.spawn(function() pcall(function() Remote:InvokeServer(itemName) end) end)
             end
+            task.wait(0.01)
         end
+    end)
+    task.wait(0.8)
+    RootPart.CFrame = originalCFrame
+end)
+
+-- [[ SİSTEMLER (NAME UPDATER & ESP & AIM) ]] --
+task.spawn(function()
+    while _G.HubActive do
+        pcall(function()
+            local hBars = LocalPlayer.PlayerGui:FindFirstChild("healthbars")
+            if hBars then
+                for _, child in pairs(hBars:GetDescendants()) do
+                    if child.Name == "NameT" and child.Text ~= ".gg/EndardHub" then
+                        if child.Parent.Name == LocalPlayer.Name or child.Parent:FindFirstChild(LocalPlayer.Name) then
+                            child.Text = ".gg/EndardHub"
+                        end
+                    end
+                end
+            end
+        end)
+        task.wait(0.2)
     end
 end)
 
+UserInputService.InputBegan:Connect(function(input, proc)
+    if proc then return end
+    if input.KeyCode == Enum.KeyCode.CapsLock and updateAimToggle then updateAimToggle(not _G.AutoAim)
+    elseif input.KeyCode == Enum.KeyCode.N then MainFrame.Visible = not MainFrame.Visible end
+end)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    _G.HubActive = false; _G.AutoAim = false; _G.BossESP = false
+    ScreenGui:Destroy()
+end)
+
+-- ESP & Aim Lojikleri (Karakter Takibi ve Render)
 RunService.RenderStepped:Connect(function()
     if not _G.HubActive or not _G.AutoAim or not NPCsFolder then return end
     local dist, target = math.huge, nil
     for _, npc in pairs(NPCsFolder:GetChildren()) do
         if targetNames[npc.Name] and npc.Name ~= "Robo" and npc:FindFirstChild("HumanoidRootPart") then
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("HumanoidRootPart") then
-                local d = (npc.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude
-                if d < dist then dist = d; target = npc end
-            end
+            local d = (npc.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+            if d < dist then dist = d; target = npc end
         end
     end
     if target then Camera.CFrame = CFrame.new(Camera.CFrame.Position, target.HumanoidRootPart.Position) end
+end)
+
+-- ESP Tarama Döngüsü
+task.spawn(function()
+    while task.wait(1) do
+        if _G.HubActive and _G.BossESP and NPCsFolder then
+            for _, npc in pairs(NPCsFolder:GetChildren()) do
+                if targetNames[npc.Name] and not npc:FindFirstChild("ESP_Marker") then
+                    local marker = Instance.new("StringValue", npc); marker.Name = "ESP_Marker"
+                    local hl = Instance.new("Highlight", npc); hl.Name = "ESP_Highlight"; hl.FillColor = Color3.fromRGB(255, 0, 0); hl.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+                    task.spawn(function()
+                        while npc.Parent and _G.BossESP do 
+                            hl.OutlineColor = Color3.fromHSV(tick()%5/5, 1, 1)
+                            task.wait() 
+                        end
+                        if hl then hl:Destroy() end
+                    end)
+                end
+            end
+        end
+    end
 end)
