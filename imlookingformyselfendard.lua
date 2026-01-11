@@ -1,4 +1,3 @@
-
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -6,7 +5,6 @@ local TweenService = game:GetService("TweenService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
-
 
 local targetNames = {
     ["Robo"] = true, ["Hawk Eye"] = true, ["Roger"] = true, 
@@ -21,12 +19,10 @@ _G.AutoAim = false
 _G.BossESP = true
 _G.HubActive = true
 
-
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "EndardHub_Ultimate"
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
-
 
 local NotifyLabel = Instance.new("TextLabel")
 NotifyLabel.Name = "NotifyLabel"
@@ -49,12 +45,11 @@ local function showNotify(text)
     NotifyStroke.Transparency = 0
     NotifyLabel.Position = UDim2.new(0.5, -200, 0.1, -100)
     TweenService:Create(NotifyLabel, TweenInfo.new(0.4, Enum.EasingStyle.Back), {Position = UDim2.new(0.5, -200, 0.15, 0)}):Play()
-    task.delay(2, function()
+    task.delay(4, function() -- İstediğin gibi 4 saniye yapıldı
         TweenService:Create(NotifyLabel, TweenInfo.new(0.5), {TextTransparency = 1, Position = UDim2.new(0.5, -200, 0.1, -100)}):Play()
         TweenService:Create(NotifyStroke, TweenInfo.new(0.5), {Transparency = 1}):Play()
     end)
 end
-
 
 local MainFrame = Instance.new("Frame")
 MainFrame.Parent = ScreenGui
@@ -90,14 +85,13 @@ ContentContainer.Parent = MainFrame
 ContentContainer.BackgroundTransparency = 1
 ContentContainer.Position = UDim2.new(0, 15, 0, 60)
 ContentContainer.Size = UDim2.new(1, -30, 1, -70)
-ContentContainer.CanvasSize = UDim2.new(0, 0, 2.5, 0) -- İçerik arttığı için Canvas büyütüldü
+ContentContainer.CanvasSize = UDim2.new(0, 0, 3, 0) -- Alan genişletildi
 ContentContainer.ScrollBarThickness = 2
 ContentContainer.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 170)
 
 local UIList = Instance.new("UIListLayout")
 UIList.Parent = ContentContainer
 UIList.Padding = UDim.new(0, 8)
-
 
 local function createToggle(text, defaultState, callback)
     local Wrapper = Instance.new("Frame")
@@ -146,7 +140,6 @@ local function performUltraFastScan(targets)
     if #foundList > 0 then showNotify("BULUNDU: " .. table.concat(foundList, " & ")) end
 end
 
-
 local updateAimToggle = createToggle("Auto Aim [Caps Lock]", false, function(state) _G.AutoAim = state end)
 createToggle("Boss ESP", true, function(state) _G.BossESP = state end)
 
@@ -159,7 +152,6 @@ createActionButton("Mihawk & Roger Tarama", Color3.fromRGB(80, 50, 120), functio
     r.CFrame = old
 end)
 
-
 createActionButton("Juzo Tarama", Color3.fromRGB(150, 80, 0), function()
     local r = LocalPlayer.Character.HumanoidRootPart
     local old = r.CFrame
@@ -169,6 +161,18 @@ createActionButton("Juzo Tarama", Color3.fromRGB(150, 80, 0), function()
     r.CFrame = old
 end)
 
+-- EKLEDİĞİM BUTON BURADA:
+createActionButton("Fish Count", Color3.fromRGB(0, 150, 200), function()
+    pcall(function()
+        local statsPath = ReplicatedStorage:FindFirstChild("Stats" .. LocalPlayer.Name)
+        if statsPath then
+            local fishesCaught = statsPath.Stats.FishesCaught.Value
+            showNotify("Yakalanan Balık: " .. tostring(fishesCaught))
+        else
+            showNotify("Veri Bulunamadı!")
+        end
+    end)
+end)
 
 local Divider = Instance.new("Frame"); Divider.Parent = ContentContainer; Divider.Size = UDim2.new(1, 0, 0, 1); Divider.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
 local MTitle = Instance.new("TextLabel"); MTitle.Parent = ContentContainer; MTitle.Size = UDim2.new(1, 0, 0, 20); MTitle.Text = "MERCHANT ITEMS"; MTitle.TextColor3 = Color3.fromRGB(0, 255, 170); MTitle.Font = Enum.Font.GothamBold; MTitle.BackgroundTransparency = 1; MTitle.TextSize = 12
@@ -199,7 +203,6 @@ createActionButton("ÇALIŞTIR (Işınlan + 40x)", Color3.fromRGB(0, 100, 200), 
     end)
     task.wait(0.8); RootPart.CFrame = originalCFrame
 end)
-
 
 task.spawn(function()
     while _G.HubActive do
