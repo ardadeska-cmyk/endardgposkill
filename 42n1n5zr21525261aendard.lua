@@ -7,7 +7,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
---// GLOBAL STATES
+
 _G.HubActive = true
 _G.AutoAim = false 
 _G.BossESP = true
@@ -22,17 +22,17 @@ getgenv().FishTime = 21
 
 local targetNames = {["Robo"] = true, ["Hawk Eye"] = true, ["Roger"] = true, ["Donmingo"] = true, ["Soul King"] = true, ["Juzo the Diamondback"] = true, ["Law"] = true}
 local ItemsList = {"Special Tailor Token", "Kessui","Race Reroll", "Red Cloud Costume","SP Reset Essence","Coffin Boat", "Ten Tails Jinchuriki Costume", "Striker","Iceborn Headband","Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest", "Rare Fish Bait", "Legendary Fish Bait", "Sorcerer Hunter Costume", "Powderpunk Outfit"}
--- TigerFin -> Tigerfin olarak düzeltildi
+
 local FishList = {"Blue-Lip Grouper", "Exotic Tigerfin", "Tigerfin", "Fangfish", "Zebra Ribbon Angelfish", "Crimson Snapper", "Crimson Polka Puffer"}
 local SelectedItems = {}
 
---// UI INITIALIZATION
+
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "EndardHub_Official"
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
---// RGB NAME TAG
+
 task.spawn(function()
     while _G.HubActive do
         pcall(function()
@@ -49,7 +49,7 @@ task.spawn(function()
     end
 end)
 
---// NOTIFY & DRAGGING
+
 local function showNotify(text)
     local NotifyLabel = Instance.new("TextLabel", ScreenGui)
     NotifyLabel.Size = UDim2.new(0, 400, 0, 50); NotifyLabel.Position = UDim2.new(0.5, -200, 0.1, -100); NotifyLabel.BackgroundTransparency = 1
@@ -78,14 +78,14 @@ local function makeDraggable(frame)
     UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 end
 
---// MAIN FRAME
+
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 650, 0, 420); MainFrame.Position = UDim2.new(0.5, -325, 0.5, -210); MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 15); MainFrame.Visible = false; MainFrame.ClipsDescendants = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
 local MainStroke = Instance.new("UIStroke", MainFrame); MainStroke.Color = _G.MainColor; MainStroke.Thickness = 1.5
 makeDraggable(MainFrame)
 
---// LOGO (SOL UST)
+
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Text = "EndardHub"
 Title.Font = Enum.Font.GothamBold
@@ -96,7 +96,7 @@ Title.Size = UDim2.new(0, 200, 0, 30)
 Title.BackgroundTransparency = 1
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
---// INTRO
+
 local function startIntro()
     local IntroFrame = Instance.new("Frame", ScreenGui)
     IntroFrame.Size = UDim2.new(1, 0, 1, 0); IntroFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0); IntroFrame.BackgroundTransparency = 0.3; IntroFrame.ZIndex = 200
@@ -105,7 +105,7 @@ local function startIntro()
     task.wait(2); IntroFrame:Destroy(); _G.CanToggle = true; MainFrame.Visible = true
 end
 
---// TABS
+
 local Sidebar = Instance.new("Frame", MainFrame)
 Sidebar.Position = UDim2.new(0, 15, 0, 55); Sidebar.Size = UDim2.new(0, 160, 1, -70); Sidebar.BackgroundTransparency = 1
 Instance.new("UIListLayout", Sidebar).Padding = UDim.new(0, 5)
@@ -129,7 +129,7 @@ end
 
 local FarmPage = createTab("Farming"); local MerchPage = createTab("Merchant"); local VisualPage = createTab("Visuals"); local SettingsPage = createTab("Settings")
 
---// UI HELPERS
+
 local function createToggle(parent, text, default, callback)
     local frame = Instance.new("Frame", parent); frame.Size = UDim2.new(1, 0, 0, 45); frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25); Instance.new("UICorner", frame)
     local lbl = Instance.new("TextLabel", frame); lbl.Size = UDim2.new(0.7,0,1,0); lbl.Position = UDim2.new(0,12,0,0); lbl.Text = text; lbl.TextColor3 = Color3.new(1,1,1); lbl.Font = Enum.Font.Gotham; lbl.TextSize = 13; lbl.BackgroundTransparency = 1; lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -150,7 +150,7 @@ local function createSlider(parent, text, min, max, default, callback)
     end end)
 end
 
---// FEATURES
+
 createToggle(FarmPage, "Auto Aim (Lock Boss)", _G.AutoAim, function(v) 
     _G.AutoAim = v 
     showNotify("Auto Aim: " .. (v and "ON (CapsLock)" or "OFF"))
@@ -188,7 +188,7 @@ createToggle(FarmPage, "Auto Fish", false, function(v)
     end) end
 end)
 
--- AUTO SELL (SÜREKLİ SATIŞ DÖNGÜSÜ)
+
 createToggle(FarmPage, "Auto Sell Fish (Continuous)", false, function(v)
     getgenv().FishSellEnabled = v
     if v then task.spawn(function() 
@@ -198,9 +198,9 @@ createToggle(FarmPage, "Auto Sell Fish (Continuous)", false, function(v)
                     local sellArgs = {{Fish = fName, All = true, Method = "SellFish"}}
                     ReplicatedStorage:WaitForChild("FishingShopRemote"):InvokeServer(unpack(sellArgs))
                 end)
-                task.wait(0.01) -- Spam koruması için çok kısa bekleme
+                task.wait(0.01) 
             end
-            task.wait(1) -- Liste bittikten sonra 1 saniye bekle ve tekrar başla
+            task.wait(1)
         end 
     end) end
 end)
@@ -245,7 +245,7 @@ createToggle(SettingsPage, "Rainbow UI", false, function(v) _G.Rainbow = v end)
 local UnloadBtn = Instance.new("TextButton", SettingsPage); UnloadBtn.Size = UDim2.new(1,0,0,40); UnloadBtn.BackgroundColor3 = Color3.fromRGB(150,50,50); UnloadBtn.Text = "UNLOAD HUB"; UnloadBtn.TextColor3 = Color3.new(1,1,1); UnloadBtn.Font = Enum.Font.GothamBold; UnloadBtn.TextSize = 14; Instance.new("UICorner", UnloadBtn)
 UnloadBtn.MouseButton1Click:Connect(function() _G.HubActive = false; ScreenGui:Destroy() end)
 
---// INPUT & LOGIC LOOPS
+
 local LockTarget = nil
 UserInputService.InputBegan:Connect(function(i, p)
     if p then return end
