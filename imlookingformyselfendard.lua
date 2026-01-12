@@ -11,7 +11,7 @@ local targetNames = {
     ["Donmingo"] = true, ["Soul King"] = true, ["Juzo the Diamondback"] = true, ["Law"] = true
 }
 
-local ItemsList = {"Special Tailor Token", "Banana Fishing Rod","Kessui" ,"Race Reroll", "Red Cloud Costume","SP Reset Essence","Coffin Boat", "Ten Tails Jinchuriki Costume", "Striker","Iceborn Headband","Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest", "Rare Fish Bait", "Legendary Fish Bait", "Sorcerer Hunter Costume", "Powderpunk Outfit"}
+local ItemsList = {"Special Tailor Token", "Merchants Banana Rod" ,"Kessui" ,"Race Reroll", "Red Cloud Costume","SP Reset Essence","Coffin Boat", "Ten Tails Jinchuriki Costume", "Striker","Iceborn Headband","Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest", "Rare Fish Bait", "Legendary Fish Bait", "Sorcerer Hunter Costume", "Powderpunk Outfit"}
 local NPCsFolder = workspace:FindFirstChild("NPCs")
 local SelectedItems = {}
 
