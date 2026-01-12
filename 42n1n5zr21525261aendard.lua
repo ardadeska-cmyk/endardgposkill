@@ -22,7 +22,18 @@ getgenv().FishTime = 21
 
 local targetNames = {["Robo"] = true, ["Hawk Eye"] = true, ["Roger"] = true, ["Donmingo"] = true, ["Soul King"] = true, ["Juzo the Diamondback"] = true, ["Law"] = true}
 local ItemsList = {"Special Tailor Token", "Merchants Banana Rod", "Kessui","Race Reroll", "Red Cloud Costume","SP Reset Essence","Coffin Boat", "Ten Tails Jinchuriki Costume", "Striker","Iceborn Headband","Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest", "Rare Fish Bait", "Legendary Fish Bait", "Sorcerer Hunter Costume", "Powderpunk Outfit"}
-local FishToSell = {"Blue-Lip Grouper", "Exotic Tigerfin", "Tigerfin", "Fangfish", "Zebra Ribbon Angelfish", "Crimson Snapper", "Crimson Polka Puffer"}
+
+-- SATILACAK BALIKLAR LİSTESİ
+local FishToSell = {
+    "Blue-Lip Grouper", 
+    "Exotic Tigerfin", 
+    "Tigerfin", 
+    "Fangfish", 
+    "Zebra Ribbon Angelfish", 
+    "Crimson Snapper", 
+    "Crimson Polka Puffer"
+}
+
 local SelectedItems = {}
 
 --// BOSS ESP & AIM LOGIC
@@ -172,12 +183,26 @@ createToggle(FarmPage, "Auto Fish [New]", false, function(v) getgenv().AutoFishN
 createSlider(FarmPage, "Fish Time (s)", 1, 30, 21, function(v) getgenv().FishTime = v end)
 createToggle(FarmPage, "Auto Fish (Logic)", false, function(v) getgenv().AutoFishEnabled = v; if v then task.spawn(function() while getgenv().AutoFishEnabled and _G.HubActive do runFishing(getgenv().FishTime, "AutoFishEnabled") task.wait(0.1) end end) end end)
 
+--// YENİ DÜZELTİLMİŞ BALIK SATMA SİSTEMİ
 createToggle(FarmPage, "Auto Sell Fish (Continuous)", false, function(v)
     getgenv().FishSellEnabled = v; if v then task.spawn(function() 
         local ShopRemote = ReplicatedStorage:WaitForChild("FishingShopRemote")
         while getgenv().FishSellEnabled and _G.HubActive do
-            for _, fName in pairs(FishToSell) do pcall(function() ShopRemote:InvokeServer({[1] = {["Fish"] = fName, ["All"] = true, ["Method"] = "SellFish"}}) end) task.wait(0.05) end
-            task.wait(1)
+            for _, fName in pairs(FishToSell) do 
+                pcall(function() 
+                    -- Senin verdiğin tam format:
+                    local args = {
+                        [1] = {
+                            ["Fish"] = fName,
+                            ["All"] = true,
+                            ["Method"] = "SellFish"
+                        }
+                    }
+                    ShopRemote:InvokeServer(unpack(args))
+                end) 
+                task.wait(0.1) -- Balıklar arası kısa bekleme
+            end
+            task.wait(1) -- Liste bittikten sonra 1 saniye bekle ve tekrarla
         end
     end) end
 end)
@@ -191,40 +216,29 @@ createToggle(FarmPage, "Auto Buy Common Bait", false, function(v)
     end) end
 end)
 
---// MERCHANT TAB (ENHANCED)
+--// MERCHANT TAB
 local MerchActionBtn = Instance.new("TextButton", MerchPage); MerchActionBtn.Size = UDim2.new(1, 0, 0, 45); MerchActionBtn.BackgroundColor3 = Color3.fromRGB(0, 100, 200); MerchActionBtn.Text = "ÇALIŞTIR (Işınlan + 40x)"; MerchActionBtn.TextColor3 = Color3.new(1,1,1); MerchActionBtn.Font = Enum.Font.GothamBold; MerchActionBtn.TextSize = 14; Instance.new("UICorner", MerchActionBtn)
 
 MerchActionBtn.MouseButton1Click:Connect(function()
     pcall(function()
-        local RootPart = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-        local comp = ReplicatedStorage.CompassGuider:FindFirstChild("Traveling Merchant")
-        
-        if not RootPart then return end
-        if not comp then showNotify("Merchant Aktif Değil!"); return end
-        
+        local comp = ReplicatedStorage.CompassGuider:FindFirstChild("Traveling Merchant"); if not comp then showNotify("Merchant Bulunamadı!"); return end
+        local RootPart = LocalPlayer.Character.HumanoidRootPart
         local target = (typeof(comp.Value) == "CFrame" and comp.Value) or CFrame.new(comp.Value)
         local original = RootPart.CFrame
-        local Remote = ReplicatedStorage.Events.TravelingMerchentRemote
         
-        -- Işınlanma ve Süper Hızlı Alışveriş
         LocalPlayer:RequestStreamAroundAsync(target.Position)
         RootPart.CFrame = target
         
-        task.spawn(function()
-            for i = 1, 40 do
-                task.spawn(function() pcall(function() Remote:InvokeServer("OpenShop") end) end)
-                for item, _ in pairs(SelectedItems) do 
-                    if SelectedItems[item] then
-                        task.spawn(function() pcall(function() Remote:InvokeServer(item) end) end) 
-                    end
-                end
-                task.wait(0.01)
-            end
+        task.spawn(function() 
+            for i = 1, 40 do 
+                task.spawn(function() ReplicatedStorage.Events.TravelingMerchentRemote:InvokeServer("OpenShop") end) 
+                for item, state in pairs(SelectedItems) do 
+                    if state then task.spawn(function() ReplicatedStorage.Events.TravelingMerchentRemote:InvokeServer(item) end) end 
+                end 
+                task.wait(0.01) 
+            end 
         end)
-        
-        task.wait(0.8)
-        RootPart.CFrame = original
-        showNotify("Merchant İşlemi Bitti!")
+        task.wait(0.8); RootPart.CFrame = original
     end)
 end)
 
@@ -232,8 +246,7 @@ for _, item in pairs(ItemsList) do
     local btn = Instance.new("TextButton", MerchPage); btn.Size = UDim2.new(1,0,0,28); btn.BackgroundColor3 = Color3.fromRGB(45,45,45); btn.Text = item; btn.TextColor3 = Color3.fromRGB(180,180,180); btn.Font = Enum.Font.Gotham; btn.TextSize = 11; Instance.new("UICorner", btn)
     btn.MouseButton1Click:Connect(function() 
         SelectedItems[item] = not SelectedItems[item]
-        btn.BackgroundColor3 = SelectedItems[item] and Color3.fromRGB(0,150,100) or Color3.fromRGB(45,45,45)
-        btn.TextColor3 = SelectedItems[item] and Color3.new(1,1,1) or Color3.fromRGB(180,180,180)
+        btn.BackgroundColor3 = SelectedItems[item] and Color3.fromRGB(0,150,100) or Color3.fromRGB(45,45,45) 
     end)
 end
 
@@ -255,13 +268,10 @@ UserInputService.InputBegan:Connect(function(i, p)
         if AimToggleBtn_Ref then AimToggleBtn_Ref.BackgroundColor3 = _G.AutoAim and _G.MainColor or Color3.fromRGB(50,50,50) end
         if _G.AutoAim then
             local dist = 800
-            local npcFolder = workspace:FindFirstChild("NPCs")
-            if npcFolder then
-                for _, npc in pairs(npcFolder:GetChildren()) do
-                    if targetNames[npc.Name] and npc:FindFirstChild("HumanoidRootPart") then
-                        local d = (npc.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                        if d < dist then dist = d; LockTarget = npc end
-                    end
+            for _, npc in pairs(workspace.NPCs:GetChildren()) do
+                if targetNames[npc.Name] and npc:FindFirstChild("HumanoidRootPart") then
+                    local d = (npc.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                    if d < dist then dist = d; LockTarget = npc end
                 end
             end
             if LockTarget then showNotify("Locked: " .. LockTarget.Name) end
