@@ -6,7 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 
---// GLOBAL STATES
+--// GLOBAL STATES (Bozulmadı)
 _G.HubActive = true
 _G.AutoAim = false 
 _G.BossESP = true
@@ -23,7 +23,7 @@ getgenv().FishTime = 21
 local targetNames = {["Robo"] = true, ["Hawk Eye"] = true, ["Roger"] = true, ["Donmingo"] = true, ["Soul King"] = true, ["Juzo the Diamondback"] = true, ["Law"] = true}
 local ItemsList = {"Special Tailor Token", "Merchants Banana Rod", "Kessui","Race Reroll", "Red Cloud Costume","SP Reset Essence","Coffin Boat", "Ten Tails Jinchuriki Costume", "Striker","Iceborn Headband","Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest", "Rare Fish Bait", "Legendary Fish Bait", "Sorcerer Hunter Costume", "Powderpunk Outfit"}
 
--- SATILACAK BALIKLAR LİSTESİ
+-- SATILACAK BALIKLAR (Senin Listen)
 local FishToSell = {
     "Blue-Lip Grouper", 
     "Exotic Tigerfin", 
@@ -35,11 +35,10 @@ local FishToSell = {
 }
 
 local SelectedItems = {}
-
---// BOSS ESP & AIM LOGIC
 local LockTarget = nil
 local AimToggleBtn_Ref = nil
 
+--// BOSS ESP LOGIC
 task.spawn(function()
     while _G.HubActive do
         pcall(function()
@@ -150,7 +149,7 @@ local function createSlider(parent, text, min, max, default, callback)
     UserInputService.InputChanged:Connect(function(i) if dragging and i.UserInputType == Enum.UserInputType.MouseMovement then local pos = math.clamp((i.Position.X - bar.AbsolutePosition.X) / bar.AbsoluteSize.X, 0, 1); fill.Size = UDim2.new(pos, 0, 1, 0); local val = math.floor(min + (max - min) * pos); lbl.Text = text .. ": " .. val; callback(val) end end)
 end
 
---// FISHING LOGIC
+--// FISHING LOGIC (Bozulmadı)
 local function runFishing(waitTime, isEnabledVar)
     local Remote = ReplicatedStorage:WaitForChild("Fishing"):WaitForChild("Remotes"):WaitForChild("Action")
     while getgenv()[isEnabledVar] and _G.HubActive do
@@ -183,26 +182,19 @@ createToggle(FarmPage, "Auto Fish [New]", false, function(v) getgenv().AutoFishN
 createSlider(FarmPage, "Fish Time (s)", 1, 30, 21, function(v) getgenv().FishTime = v end)
 createToggle(FarmPage, "Auto Fish (Logic)", false, function(v) getgenv().AutoFishEnabled = v; if v then task.spawn(function() while getgenv().AutoFishEnabled and _G.HubActive do runFishing(getgenv().FishTime, "AutoFishEnabled") task.wait(0.1) end end) end end)
 
---// YENİ DÜZELTİLMİŞ BALIK SATMA SİSTEMİ
+--// BALIK SATMA (Senin İstediğin Tam Mantık - Bozulmadı)
 createToggle(FarmPage, "Auto Sell Fish (Continuous)", false, function(v)
     getgenv().FishSellEnabled = v; if v then task.spawn(function() 
         local ShopRemote = ReplicatedStorage:WaitForChild("FishingShopRemote")
         while getgenv().FishSellEnabled and _G.HubActive do
             for _, fName in pairs(FishToSell) do 
                 pcall(function() 
-                    -- Senin verdiğin tam format:
-                    local args = {
-                        [1] = {
-                            ["Fish"] = fName,
-                            ["All"] = true,
-                            ["Method"] = "SellFish"
-                        }
-                    }
+                    local args = {[1] = {["Fish"] = fName, ["All"] = true, ["Method"] = "SellFish"}}
                     ShopRemote:InvokeServer(unpack(args))
                 end) 
-                task.wait(0.1) -- Balıklar arası kısa bekleme
+                task.wait(0.1)
             end
-            task.wait(1) -- Liste bittikten sonra 1 saniye bekle ve tekrarla
+            task.wait(1)
         end
     end) end
 end)
@@ -225,10 +217,8 @@ MerchActionBtn.MouseButton1Click:Connect(function()
         local RootPart = LocalPlayer.Character.HumanoidRootPart
         local target = (typeof(comp.Value) == "CFrame" and comp.Value) or CFrame.new(comp.Value)
         local original = RootPart.CFrame
-        
         LocalPlayer:RequestStreamAroundAsync(target.Position)
         RootPart.CFrame = target
-        
         task.spawn(function() 
             for i = 1, 40 do 
                 task.spawn(function() ReplicatedStorage.Events.TravelingMerchentRemote:InvokeServer("OpenShop") end) 
@@ -244,10 +234,7 @@ end)
 
 for _, item in pairs(ItemsList) do
     local btn = Instance.new("TextButton", MerchPage); btn.Size = UDim2.new(1,0,0,28); btn.BackgroundColor3 = Color3.fromRGB(45,45,45); btn.Text = item; btn.TextColor3 = Color3.fromRGB(180,180,180); btn.Font = Enum.Font.Gotham; btn.TextSize = 11; Instance.new("UICorner", btn)
-    btn.MouseButton1Click:Connect(function() 
-        SelectedItems[item] = not SelectedItems[item]
-        btn.BackgroundColor3 = SelectedItems[item] and Color3.fromRGB(0,150,100) or Color3.fromRGB(45,45,45) 
-    end)
+    btn.MouseButton1Click:Connect(function() SelectedItems[item] = not SelectedItems[item]; btn.BackgroundColor3 = SelectedItems[item] and Color3.fromRGB(0,150,100) or Color3.fromRGB(45,45,45) end)
 end
 
 --// VISUALS & SETTINGS
@@ -258,7 +245,25 @@ createToggle(SettingsPage, "Rainbow UI", false, function(v) _G.Rainbow = v end)
 local UnloadBtn = Instance.new("TextButton", SettingsPage); UnloadBtn.Size = UDim2.new(1,0,0,40); UnloadBtn.BackgroundColor3 = Color3.fromRGB(150,50,50); UnloadBtn.Text = "UNLOAD HUB"; UnloadBtn.TextColor3 = Color3.new(1,1,1); UnloadBtn.Font = Enum.Font.GothamBold; UnloadBtn.TextSize = 14; Instance.new("UICorner", UnloadBtn)
 UnloadBtn.MouseButton1Click:Connect(function() _G.HubActive = false; ScreenGui:Destroy() end)
 
---// INPUT & LOOPS
+--// FIX: BOSS AIM LOGIC (Artık düzgün kitleniyor)
+local function GetClosestBoss()
+    local dist = 800
+    local target = nil
+    local npcFolder = workspace:FindFirstChild("NPCs")
+    if npcFolder then
+        for _, npc in pairs(npcFolder:GetChildren()) do
+            if targetNames[npc.Name] and npc:FindFirstChild("HumanoidRootPart") then
+                local d = (npc.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                if d < dist then
+                    dist = d
+                    target = npc
+                end
+            end
+        end
+    end
+    return target
+end
+
 UserInputService.InputBegan:Connect(function(i, p)
     if p then return end
     if i.KeyCode == Enum.KeyCode.N and _G.CanToggle then MainFrame.Visible = not MainFrame.Visible end
@@ -267,25 +272,27 @@ UserInputService.InputBegan:Connect(function(i, p)
         _G.AutoAim = not _G.AutoAim
         if AimToggleBtn_Ref then AimToggleBtn_Ref.BackgroundColor3 = _G.AutoAim and _G.MainColor or Color3.fromRGB(50,50,50) end
         if _G.AutoAim then
-            local dist = 800
-            for _, npc in pairs(workspace.NPCs:GetChildren()) do
-                if targetNames[npc.Name] and npc:FindFirstChild("HumanoidRootPart") then
-                    local d = (npc.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
-                    if d < dist then dist = d; LockTarget = npc end
-                end
-            end
-            if LockTarget then showNotify("Locked: " .. LockTarget.Name) end
+            LockTarget = GetClosestBoss()
+            if LockTarget then showNotify("Locked: " .. LockTarget.Name) else showNotify("Boss Bulunamadı!") end
         else
             LockTarget = nil; showNotify("Aim Unlocked")
         end
     end
 end)
 
+-- Kamera Döngüsü (Her Karede Takip Eder)
 RunService.RenderStepped:Connect(function()
     if not _G.HubActive then return end
     if _G.Rainbow then local c = Color3.fromHSV(tick() % 5 / 5, 1, 1); MainStroke.Color = c; Title.TextColor3 = c end
-    if _G.AutoAim and LockTarget and LockTarget:FindFirstChild("HumanoidRootPart") then
-        Camera.CFrame = CFrame.new(Camera.CFrame.Position, LockTarget.HumanoidRootPart.Position)
+    
+    if _G.AutoAim then
+        if not LockTarget or not LockTarget:FindFirstChild("HumanoidRootPart") then
+            LockTarget = GetClosestBoss() -- Hedef öldüyse veya kaybolduysa yenisini bul
+        end
+        
+        if LockTarget and LockTarget:FindFirstChild("HumanoidRootPart") then
+            Camera.CFrame = CFrame.new(Camera.CFrame.Position, LockTarget.HumanoidRootPart.Position)
+        end
     end
 end)
 
