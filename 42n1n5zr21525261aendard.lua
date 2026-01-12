@@ -7,7 +7,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
-
+--// GLOBAL STATES
 _G.HubActive = true
 _G.AutoAim = false 
 _G.BossESP = true
@@ -16,23 +16,23 @@ _G.MainColor = Color3.fromRGB(0, 162, 255)
 _G.CanToggle = false 
 
 getgenv().AutoFishEnabled = false
+getgenv().AutoFishNewEnabled = false
 getgenv().FishSellEnabled = false
 getgenv().AutoBuyEnabled = false
 getgenv().FishTime = 21
 
 local targetNames = {["Robo"] = true, ["Hawk Eye"] = true, ["Roger"] = true, ["Donmingo"] = true, ["Soul King"] = true, ["Juzo the Diamondback"] = true, ["Law"] = true}
 local ItemsList = {"Special Tailor Token", "Kessui","Race Reroll", "Red Cloud Costume","SP Reset Essence","Coffin Boat", "Ten Tails Jinchuriki Costume", "Striker","Iceborn Headband","Legendary Fruit Chest", "Rare Fruit Chest", "Mythical Fruit Chest", "Rare Fish Bait", "Legendary Fish Bait", "Sorcerer Hunter Costume", "Powderpunk Outfit"}
-
 local FishList = {"Blue-Lip Grouper", "Exotic Tigerfin", "Tigerfin", "Fangfish", "Zebra Ribbon Angelfish", "Crimson Snapper", "Crimson Polka Puffer"}
 local SelectedItems = {}
 
-
+--// UI INITIALIZATION
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "EndardHub_Official"
 ScreenGui.Parent = game:GetService("CoreGui")
 ScreenGui.ResetOnSpawn = false
 
-
+--// RGB NAME TAG
 task.spawn(function()
     while _G.HubActive do
         pcall(function()
@@ -49,7 +49,7 @@ task.spawn(function()
     end
 end)
 
-
+--// NOTIFY & DRAGGING
 local function showNotify(text)
     local NotifyLabel = Instance.new("TextLabel", ScreenGui)
     NotifyLabel.Size = UDim2.new(0, 400, 0, 50); NotifyLabel.Position = UDim2.new(0.5, -200, 0.1, -100); NotifyLabel.BackgroundTransparency = 1
@@ -78,25 +78,19 @@ local function makeDraggable(frame)
     UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
 end
 
-
+--// MAIN FRAME
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 650, 0, 420); MainFrame.Position = UDim2.new(0.5, -325, 0.5, -210); MainFrame.BackgroundColor3 = Color3.fromRGB(12, 12, 15); MainFrame.Visible = false; MainFrame.ClipsDescendants = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 12)
 local MainStroke = Instance.new("UIStroke", MainFrame); MainStroke.Color = _G.MainColor; MainStroke.Thickness = 1.5
 makeDraggable(MainFrame)
 
-
+--// LOGO (SOL UST)
 local Title = Instance.new("TextLabel", MainFrame)
 Title.Text = "EndardHub"
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 20
-Title.TextColor3 = _G.MainColor
-Title.Position = UDim2.new(0, 20, 0, 15)
-Title.Size = UDim2.new(0, 200, 0, 30)
-Title.BackgroundTransparency = 1
-Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.Font = Enum.Font.GothamBold; Title.TextSize = 20; Title.TextColor3 = _G.MainColor; Title.Position = UDim2.new(0, 20, 0, 15); Title.Size = UDim2.new(0, 200, 0, 30); Title.BackgroundTransparency = 1; Title.TextXAlignment = Enum.TextXAlignment.Left
 
-
+--// INTRO
 local function startIntro()
     local IntroFrame = Instance.new("Frame", ScreenGui)
     IntroFrame.Size = UDim2.new(1, 0, 1, 0); IntroFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0); IntroFrame.BackgroundTransparency = 0.3; IntroFrame.ZIndex = 200
@@ -105,7 +99,7 @@ local function startIntro()
     task.wait(2); IntroFrame:Destroy(); _G.CanToggle = true; MainFrame.Visible = true
 end
 
-
+--// TABS
 local Sidebar = Instance.new("Frame", MainFrame)
 Sidebar.Position = UDim2.new(0, 15, 0, 55); Sidebar.Size = UDim2.new(0, 160, 1, -70); Sidebar.BackgroundTransparency = 1
 Instance.new("UIListLayout", Sidebar).Padding = UDim.new(0, 5)
@@ -129,7 +123,7 @@ end
 
 local FarmPage = createTab("Farming"); local MerchPage = createTab("Merchant"); local VisualPage = createTab("Visuals"); local SettingsPage = createTab("Settings")
 
-
+--// UI HELPERS
 local function createToggle(parent, text, default, callback)
     local frame = Instance.new("Frame", parent); frame.Size = UDim2.new(1, 0, 0, 45); frame.BackgroundColor3 = Color3.fromRGB(20, 20, 25); Instance.new("UICorner", frame)
     local lbl = Instance.new("TextLabel", frame); lbl.Size = UDim2.new(0.7,0,1,0); lbl.Position = UDim2.new(0,12,0,0); lbl.Text = text; lbl.TextColor3 = Color3.new(1,1,1); lbl.Font = Enum.Font.Gotham; lbl.TextSize = 13; lbl.BackgroundTransparency = 1; lbl.TextXAlignment = Enum.TextXAlignment.Left
@@ -150,57 +144,82 @@ local function createSlider(parent, text, min, max, default, callback)
     end end)
 end
 
+--// FISHING FUNCTIONS (CORE LOGIC)
+local function startFishingLoop(mode)
+    local FishAction = ReplicatedStorage:WaitForChild("Fishing"):WaitForChild("Remotes"):WaitForChild("Action")
+    
+    while _G.HubActive do
+        local enabled = (mode == "New" and getgenv().AutoFishNewEnabled) or (mode == "Logic" and getgenv().AutoFishEnabled)
+        if not enabled then break end
 
-createToggle(FarmPage, "Auto Aim (Lock Boss)", _G.AutoAim, function(v) 
-    _G.AutoAim = v 
-    showNotify("Auto Aim: " .. (v and "ON (CapsLock)" or "OFF"))
-end)
+        pcall(function()
+            local char = LocalPlayer.Character
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            local hrp = char:FindFirstChild("HumanoidRootPart")
+            
+            -- Rod bulma
+            local rod = LocalPlayer.Backpack:FindFirstChild("Rod") or char:FindFirstChild("Rod")
+            if not rod then 
+                for _, item in pairs(LocalPlayer.Backpack:GetChildren()) do 
+                    if item.Name:lower():find("rod") then rod = item break end 
+                end 
+            end
 
-createSlider(FarmPage, "Fish Time (s)", 1, 30, 21, function(v)
-    getgenv().FishTime = v
-end)
-
-createToggle(FarmPage, "Auto Fish", false, function(v)
-    getgenv().AutoFishEnabled = v
-    if v then task.spawn(function()
-        local FishingRemote = ReplicatedStorage:WaitForChild("Fishing"):WaitForChild("Remotes"):WaitForChild("Action")
-        while getgenv().AutoFishEnabled and _G.HubActive do
-            pcall(function()
-                local char = LocalPlayer.Character
-                local hum = char:FindFirstChildOfClass("Humanoid")
-                local hrp = char:FindFirstChild("HumanoidRootPart")
-                local rod = LocalPlayer.Backpack:FindFirstChild("Rod") or char:FindFirstChild("Rod")
-                if not rod then for _, i in pairs(LocalPlayer.Backpack:GetChildren()) do if i.Name:lower():find("rod") then rod = i break end end end
+            if rod and hrp and hum then
+                -- Oltayı Al
+                hum:EquipTool(rod)
+                task.wait(0.2)
                 
-                if rod and hrp then
-                    hum:EquipTool(rod); task.wait(0.3)
-                    local throwArgs = {{Goal = vector.create(hrp.Position.X, hrp.Position.Y, hrp.Position.Z), Action = "Throw", Bait = "Common Fish Bait"}}
-                    FishingRemote:InvokeServer(unpack(throwArgs))
-                    task.wait(getgenv().FishTime)
-                    if getgenv().AutoFishEnabled then
-                        local reelArgs = {{Action = "Reel"}}
-                        FishingRemote:InvokeServer(unpack(reelArgs))
-                        task.wait(0.5); hum:UnequipTools(); task.wait(0.5)
-                    end
-                end
-            end) task.wait(0.1)
-        end
-    end) end
+                -- Throw (Kendi konumuna)
+                local throwArgs = {{
+                    Goal = Vector3.new(hrp.Position.X, hrp.Position.Y, hrp.Position.Z),
+                    Action = "Throw",
+                    Bait = "Common Fish Bait"
+                }}
+                FishAction:InvokeServer(unpack(throwArgs))
+                
+                -- Bekleme Süresi
+                local waitTime = (mode == "New" and 21) or getgenv().FishTime
+                task.wait(waitTime)
+                
+                -- Reel
+                local reelArgs = {{Action = "Reel"}}
+                FishAction:InvokeServer(unpack(reelArgs))
+                
+                -- Bırak-Al Döngüsü (0.5 sn sonra)
+                task.wait(0.5)
+                hum:UnequipTools()
+                task.wait(0.2)
+            end
+        end)
+        task.wait(0.1)
+    end
+end
+
+--// FEATURES
+createToggle(FarmPage, "Auto Aim (Lock Boss)", _G.AutoAim, function(v) _G.AutoAim = v end)
+
+createToggle(FarmPage, "Auto Fish [New]", false, function(v)
+    getgenv().AutoFishNewEnabled = v
+    if v then task.spawn(function() startFishingLoop("New") end) end
 end)
 
+createSlider(FarmPage, "Fish Time (s)", 1, 30, 21, function(v) getgenv().FishTime = v end)
+
+createToggle(FarmPage, "Auto Fish (Logic)", false, function(v)
+    getgenv().AutoFishEnabled = v
+    if v then task.spawn(function() startFishingLoop("Logic") end) end
+end)
 
 createToggle(FarmPage, "Auto Sell Fish (Continuous)", false, function(v)
     getgenv().FishSellEnabled = v
     if v then task.spawn(function() 
         while getgenv().FishSellEnabled and _G.HubActive do
             for _, fName in pairs(FishList) do 
-                pcall(function()
-                    local sellArgs = {{Fish = fName, All = true, Method = "SellFish"}}
-                    ReplicatedStorage:WaitForChild("FishingShopRemote"):InvokeServer(unpack(sellArgs))
-                end)
-                task.wait(0.01) 
+                pcall(function() ReplicatedStorage:WaitForChild("FishingShopRemote"):InvokeServer({{Fish = fName, All = true, Method = "SellFish"}}) end)
+                task.wait(0.01)
             end
-            task.wait(1)
+            task.wait(1) 
         end 
     end) end
 end)
@@ -245,7 +264,7 @@ createToggle(SettingsPage, "Rainbow UI", false, function(v) _G.Rainbow = v end)
 local UnloadBtn = Instance.new("TextButton", SettingsPage); UnloadBtn.Size = UDim2.new(1,0,0,40); UnloadBtn.BackgroundColor3 = Color3.fromRGB(150,50,50); UnloadBtn.Text = "UNLOAD HUB"; UnloadBtn.TextColor3 = Color3.new(1,1,1); UnloadBtn.Font = Enum.Font.GothamBold; UnloadBtn.TextSize = 14; Instance.new("UICorner", UnloadBtn)
 UnloadBtn.MouseButton1Click:Connect(function() _G.HubActive = false; ScreenGui:Destroy() end)
 
-
+--// INPUT & LOGIC LOOPS
 local LockTarget = nil
 UserInputService.InputBegan:Connect(function(i, p)
     if p then return end
