@@ -166,7 +166,8 @@ local TPTargets = {
     ImpelBase = CFrame.new(5937.09619, 6.06799984, -9470.65332),
     HawkEye   = CFrame.new(12599.041, 13.1663523, 2785.85669),
     SoulKing  = CFrame.new(4705.62305, 145.94603, -11611.9756),
-    Juzo      = CFrame.new(1777.96753, 36.3749886, -10628.9688)
+    Juzo      = CFrame.new(1777.96753, 36.3749886, -10628.9688),
+    Law       = CFrame.new(8636.49902, 289.713684, 11920.4316, 0.860267103, 9.31122557e-08, -0.509843647, -1.03437628e-07, 1, 8.09711675e-09, 0.509843647, 4.57713334e-08, 0.860267103)
 }
 
 local function StopFlying()
@@ -205,6 +206,7 @@ end)
 createToggle(FarmPage, "Hawk Eye TP (Fly)", false, function(v) if v then StartFlying(TPTargets.HawkEye) else StopFlying() end end)
 createToggle(FarmPage, "Juzo TP (Fly)", false, function(v) if v then StartFlying(TPTargets.Juzo) else StopFlying() end end)
 createToggle(FarmPage, "Soul King TP (Fly)", false, function(v) if v then StartFlying(TPTargets.SoulKing) else StopFlying() end end)
+createToggle(FarmPage, "Law Fly", false, function(v) if v then StartFlying(TPTargets.Law) else StopFlying() end end)
 createToggle(FarmPage, "Impel Base TP (Fly)", false, function(v) if v then StartFlying(TPTargets.ImpelBase) else StopFlying() end end)
 
 --// MERCHANT TAB
@@ -262,33 +264,29 @@ end)
 
 Tabs["Farming"].p.Visible = true; Tabs["Farming"].b.TextColor3 = _G.MainColor
 
---// GÜNCEL GİRİŞ EFEKTİ (EKRAN KARARMA + TURKUAZ YAZI)
+--// GÜNCEL GİRİŞ EFEKTİ
 task.spawn(function()
-    -- Arka Plan Karartma
     local IntroOverlay = Instance.new("Frame", ScreenGui)
     IntroOverlay.Size = UDim2.new(1, 0, 1, 0)
     IntroOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     IntroOverlay.BackgroundTransparency = 1
     IntroOverlay.ZIndex = 199
     
-    -- Turkuaz Yazı
     local IntroText = Instance.new("TextLabel", IntroOverlay)
     IntroText.Size = UDim2.new(1, 0, 1, 0)
     IntroText.BackgroundTransparency = 1
     IntroText.Text = "EndardHub"
-    IntroText.TextColor3 = Color3.fromRGB(0, 255, 255) -- Turkuaz
+    IntroText.TextColor3 = Color3.fromRGB(0, 255, 255)
     IntroText.Font = Enum.Font.GothamBold
     IntroText.TextSize = 80
     IntroText.TextTransparency = 1
     IntroText.ZIndex = 200
 
-    -- Animasyon Başlangıcı
     TweenService:Create(IntroOverlay, TweenInfo.new(1), {BackgroundTransparency = 0.4}):Play()
     TweenService:Create(IntroText, TweenInfo.new(1), {TextTransparency = 0}):Play()
     
-    task.wait(3) -- Yazının ekranda kalma süresi
+    task.wait(3)
 
-    -- Animasyon Bitişi (Menü Açılırken Kaybolma)
     TweenService:Create(IntroOverlay, TweenInfo.new(1), {BackgroundTransparency = 1}):Play()
     TweenService:Create(IntroText, TweenInfo.new(1), {TextTransparency = 1}):Play()
     
