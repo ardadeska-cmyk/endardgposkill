@@ -187,7 +187,7 @@ local function StartFlying(targetCFrame)
     currentTween = TweenService:Create(RootPart, TweenInfo.new(dist / FlySpeed, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
     currentTween:Play(); LocalPlayer.Character.Humanoid.PlatformStand = true
     noclipConnection = RunService.Stepped:Connect(function() for _, v in pairs(LocalPlayer.Character:GetChildren()) do if v:IsA("BasePart") then v.CanCollide = false end end end)
-    task.spawn(function() while isFlying do pcall(function() ReplicatedStorage.Events.takestam:FireServer(0.55, "dash") end) task.wait(0.5) end end)
+    task.spawn(function() while isFlying do pcall(function() ReplicatedStorage.Events.takestam:FireServer(0.55, "dash") end) task.wait(0.2) end end)
     currentTween.Completed:Connect(StopFlying)
 end
 
