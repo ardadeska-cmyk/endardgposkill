@@ -160,7 +160,7 @@ local function runFishing(waitTime, isEnabledVar)
 end
 
 --// NO-GRAVITY FLY LOGIC
-local FlySpeed = 140
+local FlySpeed = 120
 local currentTween, noclipConnection, isFlying = nil, nil, false
 local TPTargets = {
     ImpelBase = CFrame.new(5937.09619, 6.06799984, -9470.65332),
