@@ -1,6 +1,6 @@
 --[[
-    EndardHub - Jujutsu Zero V2 (ULTRA SPEED & AUTO-REEXECUTE)
-    Added: Auto Re-Execute on Teleport
+    EndardHub - Jujutsu Zero V2 (ULTRA SPEED & AUTO-TP TO BOSS)
+    Auto Execute: https://raw.githubusercontent.com/ardadeska-cmyk/endardgposkill/refs/heads/main/jubo.lua
 ]]
 
 if not game:IsLoaded() then game.Loaded:Wait() end
@@ -12,20 +12,21 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
-local TeleportService = game:GetService("TeleportService")
 
--- --- AUTO EXECUTE MANTIĞI (TELEPORT İÇİN) ---
--- Eğer AutoExecute açıksa, teleport olduğunda scripti tekrar çalıştırır.
-LocalPlayer.OnTeleport:Connect(function(State)
-    if _G.Config and _G.Config.AutoExecute then
-        local queue_on_teleport = (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport) or queue_on_teleport
-        if queue_on_teleport then
-            queue_on_teleport([[loadstring(game:HttpGet("BURAYA_SCRIPT_LINKINI_KOYABILIRSIN_VEYA_KODU_YAZABILIRSIN"))()]])
-        end
+-- --- AUTO EXECUTE (TELEPORT) ---
+local function SetAutoExec()
+    local queue_on_teleport = (syn and syn.queue_on_teleport) or (fluxus and fluxus.queue_on_teleport) or queue_on_teleport
+    if queue_on_teleport then
+        LocalPlayer.OnTeleport:Connect(function(State)
+            if _G.Config and _G.Config.AutoExecute then
+                queue_on_teleport([[loadstring(game:HttpGet("https://raw.githubusercontent.com/ardadeska-cmyk/endardgposkill/refs/heads/main/jubo.lua"))()]])
+            end
+        end)
     end
-end)
+end
+SetAutoExec()
 
--- --- KARAKTER BULMA (workspace.Characters.Server.Players) ---
+-- --- KARAKTER BULMA ---
 local function GetMyCharacter()
     local path = workspace:FindFirstChild("Characters")
     if path and path:FindFirstChild("Server") and path.Server:FindFirstChild("Players") then
@@ -39,12 +40,11 @@ local function GetMyCharacter()
 end
 
 -- --- AYARLAR ---
--- Global yapıldı ki teleport fonksiyonu erişebilsin
 _G.Config = {
     Aura = true,
     Retry = true,
     AutoExecute = true,
-    BringMob = true
+    BringMob = true -- Bu artık "TP to Mob" olarak çalışacak
 }
 local Config = _G.Config
 
@@ -136,8 +136,8 @@ local function CreateMenu()
 
     createCheckbox("Hyper Boss Aura", UDim2.new(0, 20, 0, 55), "Aura")
     createCheckbox("Auto Retry Boss", UDim2.new(0, 20, 0, 110), "Retry")
-    createCheckbox("Auto Execute (Save)", UDim2.new(0, 20, 0, 165), "AutoExecute")
-    createCheckbox("Bring Mobs (Stay on me)", UDim2.new(0, 20, 0, 220), "BringMob")
+    createCheckbox("Auto Execute (URL)", UDim2.new(0, 20, 0, 165), "AutoExecute")
+    createCheckbox("TP to Mob (Always)", UDim2.new(0, 20, 0, 220), "BringMob")
 
     local running = true
     closeBtn.MouseButton1Click:Connect(function()
@@ -150,7 +150,7 @@ local function CreateMenu()
         if not g and i.KeyCode == Enum.KeyCode.N then mainFrame.Visible = not mainFrame.Visible end
     end)
 
-    -- --- ANA MOTOR ---
+    -- --- ANA MOTOR (HEARTBEAT) ---
     task.spawn(function()
         local Net = ReplicatedStorage:WaitForChild("NetworkComm")
         local Combat = Net:WaitForChild("CombatService"):WaitForChild("DamageCharacter_Method")
@@ -164,21 +164,24 @@ local function CreateMenu()
             local myChar = GetMyCharacter()
             if not myChar or not myChar:FindFirstChild("HumanoidRootPart") then return end
             
+            local myRoot = myChar.HumanoidRootPart
             local NPCsFolder = workspace.Characters.Server.NPCs
             local npcList = NPCsFolder:GetChildren()
 
-            -- BRING MOB
+            -- TP TO MOB (Seni Boss'un yanına götürür)
             if Config.BringMob then
                 for _, npc in pairs(npcList) do
                     local nRoot = npc:FindFirstChild("HumanoidRootPart")
-                    if nRoot and npc:FindFirstChild("Humanoid") and npc.Humanoid.Health > 0 then
-                        nRoot.Velocity = Vector3.zero
-                        nRoot.CFrame = myChar.HumanoidRootPart.CFrame * CFrame.new(0, 0, -3)
+                    local nHum = npc:FindFirstChild("Humanoid")
+                    if nRoot and nHum and nHum.Health > 0 then
+                        -- Boss'un 3 birim arkasına ve biraz üstüne ışınlan (Sıkışmamak için)
+                        myRoot.CFrame = nRoot.CFrame * CFrame.new(0, 2, 3)
+                        break -- İlk bulduğu Boss'a gider
                     end
                 end
             end
 
-            -- AURA
+            -- AURA (ORİJİNAL SALDIRI PAKETLERİ)
             if Config.Aura and #npcList > 0 then
                 local targets = {}
                 for _, v in pairs(npcList) do
@@ -191,19 +194,21 @@ local function CreateMenu()
                     local attackData = {
                         ["CanParry"] = true,
                         ["OnCharacterHit"] = function() end,
-                        ["Origin"] = myChar.HumanoidRootPart.CFrame,
+                        ["Origin"] = myRoot.CFrame,
                         ["Parries"] = {},
                         ["WindowID"] = myChar.Name .. "_Punch",
                         ["LocalCharacter"] = myChar,
                         ["SkillID"] = "Punch"
                     }
 
+                    -- Çift vuruş paketi
                     for _ = 1, 2 do 
                         task.spawn(function()
                             Combat:InvokeServer(targets, true, attackData)
                         end)
                     end
                     
+                    -- Skill tetikleme
                     task.spawn(function()
                         Skill:InvokeServer("Punch", myChar, Vector3.zero, 1, 1)
                     end)
@@ -211,6 +216,7 @@ local function CreateMenu()
             end
         end)
 
+        -- Retry Döngüsü
         while running do
             if Config.Retry and #workspace.Characters.Server.NPCs:GetChildren() == 0 then
                 pcall(function() Retry:InvokeServer() end)
@@ -221,6 +227,7 @@ local function CreateMenu()
     end)
 end
 
+-- --- BAŞLATMA ---
 task.spawn(function()
     local NPCsFolder = workspace:WaitForChild("Characters"):WaitForChild("Server"):WaitForChild("NPCs")
     while true do
