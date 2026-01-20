@@ -53,7 +53,7 @@ ScreenGui.Parent = CoreGui
 ScreenGui.ResetOnSpawn = false
 ScreenGui.IgnoreGuiInset = true 
 
--
+
 function Library:Notify(text, duration)
     local notifFrame = Instance.new("Frame", ScreenGui)
     notifFrame.Size = UDim2.new(0, 300, 0, 40)
@@ -356,7 +356,7 @@ local function runFishing(waitTime, isEnabledVar)
     end)
 end
 
--- BOSS ESP
+
 task.spawn(function()
     while _G.HubActive do
         pcall(function()
@@ -463,7 +463,7 @@ task.spawn(function()
                                 barFill.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
                                 barFill.BorderSizePixel = 0
 
-                                -- 3. WEAPON LABEL
+                                
                                 local wpLbl = Instance.new("TextLabel", container)
                                 wpLbl.Name = "WeaponLbl"
                                 wpLbl.Size = UDim2.new(1,0,0,15)
@@ -475,12 +475,12 @@ task.spawn(function()
                                 wpLbl.LayoutOrder = 3
                                 wpLbl.Visible = false
 
-                                
+                                -- 4. STAMINA LABEL
                                 local staLbl = Instance.new("TextLabel", container)
                                 staLbl.Name = "StaminaLbl"
                                 staLbl.Size = UDim2.new(1,0,0,15)
                                 staLbl.BackgroundTransparency = 1
-                                staLbl.TextColor3 = Color3.fromRGB(0, 255, 255)
+                                staLbl.TextColor3 = Color3.fromRGB(0, 255, 255) -- Turkuaz
                                 staLbl.TextStrokeTransparency = 0.5
                                 staLbl.Font = Enum.Font.GothamSemibold
                                 staLbl.TextSize = 13
@@ -519,7 +519,7 @@ task.spawn(function()
                                     hpFrame.Visible = false
                                 end
 
-                               
+                                
                                 local wLbl = container:FindFirstChild("WeaponLbl")
                                 if _G.WeaponESP then
                                     wLbl.Visible = true
@@ -536,7 +536,7 @@ task.spawn(function()
                                     wLbl.Visible = false
                                 end
 
-                                
+                               
                                 local sLbl = container:FindFirstChild("StaminaLbl")
                                 if _G.StaminaESP then
                                     sLbl.Visible = true
@@ -569,7 +569,7 @@ task.spawn(function()
                 end
             end)
         end
-        task.wait(0.1)
+        task.wait(0.1) 
     end
 end)
 
@@ -706,14 +706,14 @@ end)
 task.spawn(function()
     _G.CanToggle = false
     
-    
+    -- Saydam Arka Plan (Oyun görünür)
     local IntroBg = Instance.new("Frame", ScreenGui)
     IntroBg.Size = UDim2.new(1,0,1,0)
     IntroBg.BackgroundColor3 = Color3.new(0,0,0)
     IntroBg.BackgroundTransparency = 0.5 
     IntroBg.ZIndex = 999
     
-    
+    -- Blur Efekti (Şıklık için)
     local Blur = Instance.new("BlurEffect", Lighting)
     Blur.Size = 24
     
