@@ -1,38 +1,50 @@
--- // Endware V21 - Master Collection
--- // Features: Auto-Farm, Auto-Equip, Combo-Skills, Portal-Priority, Auto-Retry, Auto-Execute
--- // RightShift: Toggle Menu
-
--- // 1. DUPLICATE PREVENTION
-if game.CoreGui:FindFirstChild("EndwareGui") then game.CoreGui.EndwareGui:Destroy() end
+-- // Endware V18 - Final Automation & Logic Override
+-- // RightShift: Toggle Menu | Features: Smart-Retry(10s), Auto-Execute, Portal Priority
 
 local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
 local Workspace = game:GetService("Workspace")
-local LocalPlayer = game:GetService("Players").LocalPlayer
+local CoreGui = game:GetService("CoreGui")
+local LocalPlayer = Players.LocalPlayer
 
 local Running = true
 local AutoFarm = true
-local AutoExecute = true
+local AutoExecute = true -- Checkbox özelliği
 
--- // 2. AUTO-EXECUTE (Teleport koruması)
-local autoExecCode = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/ardadeska-cmyk/endardgposkill/refs/heads/main/zero"))()'
+-- // Auto-Execute Sistemi (Çoklu tetikleme önlemi için kontrol eklendi)
 local function SetupAutoExec()
     if AutoExecute then
-        if syn and syn.queue_on_teleport then syn.queue_on_teleport(autoExecCode)
-        elseif queue_on_teleport then queue_on_teleport(autoExecCode) end
+        if not getgenv().EndwareAutoExecuted then
+            getgenv().EndwareAutoExecuted = true
+            local code = 'loadstring(game:HttpGet("https://raw.githubusercontent.com/ardadeska-cmyk/endardgposkill/refs/heads/main/zero"))()'
+            if syn and syn.queue_on_teleport then syn.queue_on_teleport(code)
+            elseif queue_on_teleport then queue_on_teleport(code) end
+        end
     end
 end
-SetupAutoExec()
 
--- // 3. UI SETUP
-local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
-ScreenGui.Name = "EndwareGui"
+-- // --- UI ---
+local existingGui = CoreGui:FindFirstChild("EndwareScreenGui")
+if existingGui then existingGui:Destroy() end
+
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = "EndwareScreenGui"
+
 local MainFrame = Instance.new("Frame", ScreenGui)
 MainFrame.Size = UDim2.new(0, 240, 0, 250)
 MainFrame.Position = UDim2.new(0.5, -120, 0.4, -125)
 MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-MainFrame.Active = true MainFrame.Draggable = true
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
 Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
+
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "  Endware - Automation"
+Title.TextColor3 = Color3.fromRGB(150, 100, 255)
+Title.Font = Enum.Font.GothamBold
 
 local function createToggle(text, pos, callback)
     local btn = Instance.new("TextButton", MainFrame)
@@ -41,80 +53,96 @@ local function createToggle(text, pos, callback)
     btn.Text = text
     btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
     btn.TextColor3 = Color3.new(1,1,1)
-    btn.MouseButton1Click:Connect(callback)
+    btn.MouseButton1Click:Connect(function() callback(btn) end)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 5)
+    return btn
 end
 
-createToggle("Toggle Auto-Farm", UDim2.new(0.05, 0, 0.1, 0), function() AutoFarm = not AutoFarm end)
-createToggle("Toggle Auto-Execute", UDim2.new(0.05, 0, 0.35, 0), function() AutoExecute = not AutoExecute SetupAutoExec() end)
-createToggle("Unload Hub", UDim2.new(0.05, 0, 0.6, 0), function() Running = false ScreenGui:Destroy() end)
+createToggle("Toggle Auto-Farm", UDim2.new(0.05, 0, 0.2, 0), function() AutoFarm = not AutoFarm end)
+createToggle("Toggle Auto-Execute: ON", UDim2.new(0.05, 0, 0.45, 0), function(btn)
+    AutoExecute = not AutoExecute
+    btn.Text = AutoExecute and "Toggle Auto-Execute: ON" or "Toggle Auto-Execute: OFF"
+    if AutoExecute then
+        getgenv().EndwareAutoExecuted = false
+        SetupAutoExec()
+    end
+end)
+createToggle("Unload Hub", UDim2.new(0.05, 0, 0.7, 0), function() Running = false ScreenGui:Destroy() end)
+
 UserInputService.InputBegan:Connect(function(i, g) if not g and i.KeyCode == Enum.KeyCode.RightShift then MainFrame.Visible = not MainFrame.Visible end end)
 
--- // 4. COMBAT & RAID CORE
+-- // --- COMBAT & RETRY CORE ---
 local Combat = ReplicatedStorage.NetworkComm.CombatService.DamageCharacter_Method
 local Skill = ReplicatedStorage.NetworkComm.SkillService.StartSkilll_Method
 local RetryRemote = ReplicatedStorage:WaitForChild("NetworkComm"):WaitForChild("RaidsService"):WaitForChild("RetryRaid_Method")
-local FocusItem = ReplicatedStorage.NetworkComm.InventoryService.FocusItem_Method
+local FocusItemRemote = ReplicatedStorage.NetworkComm.InventoryService.FocusItem_Method
 
 task.spawn(function()
     while Running do
-        task.wait(0.15)
+        task.wait(0.1)
+        SetupAutoExec() -- Teleport için kontrolü sağla
+
         if AutoFarm then
             local NPCs = Workspace.Characters.Server.NPCs
             local MyModel = Workspace.Characters.Server.Players:FindFirstChildOfClass("Model")
 
-            -- Silah ve Sinyaller
-            pcall(function() FocusItem:InvokeServer(2) end)
+            -- Raid Sinyalleri
             pcall(function()
                 ReplicatedStorage.NetworkComm.RaidsService.SkipCurrentHandler_Signal:FireServer()
                 ReplicatedStorage.NetworkComm.RaidsService.Ready_Signal:FireServer()
             end)
 
-            -- Retry Kontrolü
-            pcall(function()
-                local label = LocalPlayer.PlayerGui:FindFirstChild("RaidHud", true) and LocalPlayer.PlayerGui.RaidHud.Frame.Frame.TextButton.Frame.Frame.TextLabel
-                if label and string.find(label.Text, "Retry") then
-                    RetryRemote:InvokeServer()
-                    task.wait(3)
-                end
-            end)
-
             if MyModel and MyModel:FindFirstChild("HumanoidRootPart") then
+                -- 0. SİLAH KONTROLÜ (Eğer elimizde silah yoksa otomatik kuşan)
+                pcall(function()
+                    if not MyModel:FindFirstChildOfClass("Tool") then
+                        FocusItemRemote:InvokeServer(2)
+                    end
+                end)
+
+                -- 1. RETRY MANTIĞI (Moblar bittiğinde 10sn bekle ve Retry at)
+                if #NPCs:GetChildren() == 0 then
+                    task.wait(10)
+                    if #NPCs:GetChildren() == 0 then -- Tekrar kontrol et
+                        pcall(function() RetryRemote:InvokeServer() end)
+                    end
+                end
+
+                -- 2. Immune ve Portal
                 local isImmune = false
                 pcall(function()
                     local hp = LocalPlayer.PlayerGui.HUD:GetChildren()[32].ContentFrame.BossHP.MainPart.Detail.HP.Text
                     if string.find(hp, "Immune") then isImmune = true end
                 end)
 
-                -- Portal veya Boss Hedefleme
+                -- 3. Combat
                 local target = nil
                 if isImmune then
                     for _, n in pairs(NPCs:GetChildren()) do if n:FindFirstChild("Hitbox") then target = n break end end
                 end
                 if not target then target = NPCs:FindFirstChildOfClass("Model") end
 
-                -- Saldırı ve Kombo
                 if target and target:FindFirstChild("HumanoidRootPart") then
                     MyModel.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
-                    local dir = (target.HumanoidRootPart.Position - MyModel.HumanoidRootPart.Position).Unit
-
-                    pcall(function()
-                        Skill:InvokeServer("Punch", MyModel, dir, {}, 1, 1)
-                        Skill:InvokeServer("SharpWhirls", MyModel, dir, {})
-                        Skill:InvokeServer("DivineSlash", MyModel, dir, {})
-
-                        local targetsToHit = {}
-                        for _, n in pairs(NPCs:GetChildren()) do
-                            if (n.HumanoidRootPart.Position - MyModel.HumanoidRootPart.Position).Magnitude < 30 then
-                                table.insert(targetsToHit, n)
-                            end
+                    local targetsToHit = {}
+                    for _, n in pairs(NPCs:GetChildren()) do
+                        if n:FindFirstChild("HumanoidRootPart") and (n.HumanoidRootPart.Position - MyModel.HumanoidRootPart.Position).Magnitude < 30 then
+                            table.insert(targetsToHit, n)
                         end
+                    end
+                    pcall(function()
+                        -- Temel Yumruk ve Hasar
+                        Skill:InvokeServer("Punch", MyModel, (target.HumanoidRootPart.Position - MyModel.HumanoidRootPart.Position).Unit, {}, 1, 1)
                         Combat:InvokeServer(targetsToHit, true, {
                             OnCharacterHit = function() end,
                             WindowID = MyModel.Name .. "_Punch",
                             LocalCharacter = MyModel,
                             SkillID = "Punch"
                         })
+
+                        -- Eksiksiz ve Doğru Parametreli Skill İstekleri (Target Model ve Vektör)
+                        Skill:InvokeServer("SharpWhirls", target, target.HumanoidRootPart.Position, {})
+                        Skill:InvokeServer("DivineSlash", target, target.HumanoidRootPart.Position, {})
                     end)
                 end
             end
