@@ -1,0 +1,114 @@
+-- // Endware V14 - Final Logic Override
+-- // Logic: Retry triggered EXCLUSIVELY by text, ignores mob count.
+-- // RightShift: Toggle Menu
+
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+local Workspace = game:GetService("Workspace")
+local LocalPlayer = Players.LocalPlayer
+
+local Running = true
+local AutoFarm = true
+
+-- // --- UI (Modern & Clean) ---
+local ScreenGui = Instance.new("ScreenGui", game:GetService("CoreGui"))
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 240, 0, 160)
+MainFrame.Position = UDim2.new(0.5, -120, 0.4, -80)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 8)
+
+local ToggleBtn = Instance.new("TextButton", MainFrame)
+ToggleBtn.Size = UDim2.new(0.9, 0, 0, 40)
+ToggleBtn.Position = UDim2.new(0.05, 0, 0.2, 0)
+ToggleBtn.Text = "Stop Auto-Farm"
+ToggleBtn.BackgroundColor3 = Color3.fromRGB(30, 70, 30)
+ToggleBtn.TextColor3 = Color3.new(1,1,1)
+
+local UnloadBtn = Instance.new("TextButton", MainFrame)
+UnloadBtn.Size = UDim2.new(0.9, 0, 0, 40)
+UnloadBtn.Position = UDim2.new(0.05, 0, 0.6, 0)
+UnloadBtn.Text = "Unload Hub"
+UnloadBtn.BackgroundColor3 = Color3.fromRGB(100, 30, 30)
+UnloadBtn.TextColor3 = Color3.new(1,1,1)
+
+ToggleBtn.MouseButton1Click:Connect(function()
+    AutoFarm = not AutoFarm
+    ToggleBtn.Text = AutoFarm and "Stop Auto-Farm" or "Start Auto-Farm"
+    ToggleBtn.BackgroundColor3 = AutoFarm and Color3.fromRGB(30, 70, 30) or Color3.fromRGB(40, 40, 40)
+end)
+
+UnloadBtn.MouseButton1Click:Connect(function() Running = false ScreenGui:Destroy() end)
+UserInputService.InputBegan:Connect(function(i, g) if not g and i.KeyCode == Enum.KeyCode.RightShift then MainFrame.Visible = not MainFrame.Visible end end)
+
+-- // --- COMBAT CORE ---
+local Combat = ReplicatedStorage.NetworkComm.CombatService.DamageCharacter_Method
+local Skill = ReplicatedStorage.NetworkComm.SkillService.StartSkilll_Method
+local RetryRemote = ReplicatedStorage:WaitForChild("NetworkComm"):WaitForChild("RaidsService"):WaitForChild("RetryRaid_Method")
+
+local function Attack(target, myModel)
+    if not target or not target:FindFirstChild("HumanoidRootPart") then return end
+    myModel.HumanoidRootPart.CFrame = target.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
+    pcall(function()
+        local dir = (target.HumanoidRootPart.Position - myModel.HumanoidRootPart.Position).Unit
+        Skill:InvokeServer("Punch", myModel, dir, {}, 1, 1)
+        Combat:InvokeServer({target}, true, {
+            OnCharacterHit = function() end,
+            WindowID = myModel.Name .. "_Punch",
+            LocalCharacter = myModel,
+            SkillID = "Punch"
+        })
+    end)
+end
+
+task.spawn(function()
+    while Running do
+        task.wait(0.2)
+        if AutoFarm then
+            local NPCs = Workspace.Characters.Server.NPCs
+            local MyModel = Workspace.Characters.Server.Players:FindFirstChildOfClass("Model")
+
+            -- 1. Raid Sinyalleri (Auto-Ready/Skip)
+            pcall(function()
+                ReplicatedStorage.NetworkComm.RaidsService.SkipCurrentHandler_Signal:FireServer()
+                ReplicatedStorage.NetworkComm.RaidsService.Ready_Signal:FireServer()
+            end)
+
+            -- 2. KESİN RETRY (Mob kontrolü yapmaz, sadece yazıya bakar)
+            pcall(function()
+                local retryLabel = LocalPlayer.PlayerGui.RaidHud.Frame.Frame.TextButton.Frame.Frame.TextLabel
+                if string.sub(retryLabel.Text, 1, 5) == "Retry" then
+                    RetryRemote:InvokeServer()
+                    task.wait(3) -- Retry sonrası spam yapmasın diye bekleme
+                end
+            end)
+
+            -- 3. Combat
+            if MyModel and MyModel:FindFirstChild("HumanoidRootPart") then
+                local isImmune = false
+                pcall(function()
+                    local HP = LocalPlayer.PlayerGui.HUD:GetChildren()[32].ContentFrame.BossHP.MainPart.Detail.HP.Text
+                    if string.find(HP, "Immune") then isImmune = true end
+                end)
+
+                if isImmune then
+                    local portal = nil
+                    for _, n in pairs(NPCs:GetChildren()) do
+                        if n:FindFirstChild("Hitbox") then portal = n break end
+                    end
+                    if portal then Attack(portal, MyModel) else
+                        local boss = NPCs:FindFirstChildOfClass("Model")
+                        if boss then Attack(boss, MyModel) end
+                    end
+                else
+                    local boss = NPCs:FindFirstChildOfClass("Model")
+                    if boss then Attack(boss, MyModel) end
+                end
+            end
+        end
+    end
+end)
